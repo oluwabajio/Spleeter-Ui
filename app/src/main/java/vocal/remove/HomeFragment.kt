@@ -40,8 +40,6 @@ class HomeFragment : Fragment(), SongAdapter.setOnSongCLick {
         val view = binding.root
 
         initListeners()
-        populateSongsInRecyclerView()
-
         if (isPermissionAccepted()) {
             poulateSongsFromStorage()
         }
@@ -51,7 +49,7 @@ class HomeFragment : Fragment(), SongAdapter.setOnSongCLick {
     }
 
     private fun poulateSongsFromStorage() {
-        val allAudioFromDevice = getAllAudioFromDevice(requireContext())
+        val allAudioFromDevice = getAllAudioFilesFromDevice(requireContext())
         binding.rvSongs.layoutManager =
             LinearLayoutManager(requireActivity(), RecyclerView.VERTICAL, false)
         val adapter = SongAdapter(allAudioFromDevice as ArrayList<AudioModel>, this)
@@ -76,78 +74,23 @@ class HomeFragment : Fragment(), SongAdapter.setOnSongCLick {
         return true
     }
 
-    private fun populateSongsInRecyclerView() {
-
-    }
 
     private fun initListeners() {
         binding.btnExtract.setOnClickListener { startExtractionService() }
     }
 
     private fun startExtractionService() {
-Toast.makeText(requireActivity(), "Background service started", Toast.LENGTH_LONG).show()
+        Toast.makeText(requireActivity(), "Background service started", Toast.LENGTH_LONG).show()
 
-        var intentService: Intent = Intent(requireActivity(), SpleeterService("SpleeterService")::class.java)
+        var intentService: Intent =
+            Intent(requireActivity(), SpleeterService("SpleeterService")::class.java)
         intentService.putExtra("anything", "pass data to background service")
         requireActivity().startService(intentService)
     }
 
 
-    fun Context.musicFiles(): MutableList<Music> {
-        // Initialize an empty mutable list of music
-        val list: MutableList<Music> = mutableListOf()
 
-        // Get the external storage media store audio uri
-        val uri: Uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
-        //val uri: Uri = MediaStore.Audio.Media.INTERNAL_CONTENT_URI
-
-        // IS_MUSIC : Non-zero if the audio file is music
-        val selection = MediaStore.Audio.Media.IS_MUSIC + "!= 0"
-
-        // Sort the musics
-        val sortOrder = MediaStore.Audio.Media.TITLE + " ASC"
-        //val sortOrder = MediaStore.Audio.Media.TITLE + " DESC"
-        val projection = arrayOf(
-            MediaStore.Audio.AudioColumns.DATA,
-            MediaStore.Audio.AudioColumns.TITLE,
-            MediaStore.Audio.AudioColumns.ALBUM,
-            MediaStore.Audio.ArtistColumns.ARTIST
-        )
-
-
-        // Query the external storage for music files
-        val cursor: Cursor? = this.contentResolver.query(
-            uri, // Uri
-            null, // Projection
-            selection, // Selection
-            null, // Selection arguments
-            sortOrder // Sort order
-        )
-
-        // If query result is not empty
-        if (cursor != null && cursor.moveToFirst()) {
-            val id: Int = cursor.getColumnIndex(MediaStore.Audio.Media._ID)
-            val title: Int = cursor.getColumnIndex(MediaStore.Audio.Media.TITLE)
-
-
-            // Now loop through the music files
-            do {
-                val audioId: Long = cursor.getLong(id)
-                val audioTitle: String = cursor.getString(title)
-                val audioPath: String = cursor.getString(0)
-
-
-                // Add the current music to the list
-                list.add(Music(audioId, audioTitle, audioPath))
-                Log.e(TAG, "musicFiles: title = ${audioTitle} path is ${audioPath}")
-            } while (cursor.moveToNext())
-        }
-
-        // Finally, return the music files list
-        return list
-    }
-
-    fun getAllAudioFromDevice(context: Context): List<AudioModel>? {
+    fun getAllAudioFilesFromDevice(context: Context): List<AudioModel>? {
         val tempAudioList: MutableList<AudioModel> = ArrayList()
         val uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
         val projection = arrayOf(
@@ -185,8 +128,10 @@ Toast.makeText(requireActivity(), "Background service started", Toast.LENGTH_LON
     }
 
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>,
-                                            grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int, permissions: Array<String>,
+        grantResults: IntArray
+    ) {
         when (requestCode) {
             111 -> {
                 if (grantResults.isNotEmpty() && grantResults[0] ==
@@ -211,7 +156,7 @@ Toast.makeText(requireActivity(), "Background service started", Toast.LENGTH_LON
     }
 
     override fun onSongClick(aPath: String) {
-        Toast.makeText(requireActivity(), aPath ,Toast.LENGTH_LONG).show()
+        Toast.makeText(requireActivity(), aPath, Toast.LENGTH_LONG).show()
     }
 
 }
